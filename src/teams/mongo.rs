@@ -48,6 +48,24 @@ impl Mongo {
         self.ratings.insert_one(rating, None).await.unwrap();
     }
 
+    pub async fn create_player(&self, player: Player) {
+        // Check to see if they are already in database
+        match self
+            .players
+            .delete_one(doc! {"name": &player.name}, None)
+            .await
+        {
+            Ok(_) => {},
+            Err(_) => {}
+        };
+
+        self
+            .players
+            .insert_one(player, None)
+            .await
+            .unwrap();
+    }
+
     pub async fn get_player(&self, id: ObjectId) -> Result<Player, Error> {
         let mut ratings = self
             .players
