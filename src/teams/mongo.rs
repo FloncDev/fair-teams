@@ -77,4 +77,25 @@ impl Mongo {
 
         Ok(Player { id: Some(id), name, skill })
     }
+
+    pub async fn get_players(&self) -> Vec<Player> {
+        let mut players: Vec<Player> = vec![];
+
+        let mut cursor = self
+            .players
+            .find(None, None)
+            .await
+            .unwrap();
+
+        while cursor.advance().await.unwrap() {
+            let current = cursor.current();
+            let id = current.get("_id").unwrap().unwrap().as_object_id().unwrap();
+
+            players.push(
+                self.get_player(id).await.unwrap()
+            );
+        }
+
+        players
+    }
 }
