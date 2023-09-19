@@ -7,7 +7,7 @@ pub struct Player {
     pub id: Option<ObjectId>,
     pub name: String,
     #[serde(skip_serializing)]
-    pub skill: f64
+    pub skill: Option<f64>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,7 +29,7 @@ impl Team {
         let mut skill_sum = 0.0;
 
         for player in &players {
-            skill_sum += player.skill;
+            skill_sum += player.skill.unwrap();
         }
 
         // Round to 1 d.p.

@@ -68,7 +68,7 @@ impl Mongo {
 
     pub async fn get_player(&self, id: ObjectId) -> Result<Player, Error> {
         let mut ratings = self
-            .players
+            .ratings
             .find(doc! {"ratee_id": id}, None)
             .await
             .unwrap();
@@ -93,7 +93,7 @@ impl Mongo {
             .unwrap()
             .name;
 
-        Ok(Player { id: Some(id), name, skill })
+        Ok(Player { id: Some(id), name, skill: Some(skill) })
     }
 
     pub async fn get_players(&self) -> Vec<Player> {
