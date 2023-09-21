@@ -73,17 +73,17 @@ impl Mongo {
             .await
             .unwrap();
 
-        let mut sum: f64 = 0.0;
+        let mut sum: i32 = 0;
         let mut count: i32 = 0;
 
         while ratings.advance().await.unwrap() {
             let current = ratings.current();
 
-            sum += current.get("rating").unwrap().unwrap().as_f64().unwrap();
+            sum += current.get("rating").unwrap().unwrap().as_i32().unwrap();
             count += 1;
         }
 
-        let skill = (sum / count as f64 * 100.0).round() / 100.0;
+        let skill = (sum as f64 / count as f64 * 100.0).round() / 100.0;
 
         let name = self
             .players
