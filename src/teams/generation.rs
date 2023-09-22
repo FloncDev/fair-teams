@@ -1,18 +1,6 @@
 use crate::teams::{Player, Team};
 use itertools::Itertools;
 
-pub fn generate_teams(players: Vec<Player>) -> Vec<Team> {
-    let mut teams: Vec<Team> = vec![];
-
-    for perm in players.iter().combinations(2) {
-        teams.push(Team::new(
-            perm.iter().map(|x| x.to_owned().to_owned()).collect(),
-        ));
-    }
-
-    teams
-}
-
 pub fn fair_teams(mut players: Vec<Player>) -> Vec<Team> {
     if players.len() % 2 != 0 {
         players.push(Player {
