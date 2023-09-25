@@ -1,5 +1,6 @@
 use crate::teams::{Player, Team};
-use itertools::Itertools;
+use rand::thread_rng;
+use rand::seq::SliceRandom;
 
 pub fn fair_teams(mut players: Vec<Player>) -> Vec<Team> {
     if players.len() % 2 != 0 {
@@ -9,6 +10,8 @@ pub fn fair_teams(mut players: Vec<Player>) -> Vec<Team> {
             skill: Some(0.0),
         })
     }
+
+    players.shuffle(&mut thread_rng());
     
     // Sort players
     let mut sorted: Vec<Player> = vec![];
