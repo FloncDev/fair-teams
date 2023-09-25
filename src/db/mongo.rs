@@ -98,8 +98,9 @@ impl Mongo {
 
     pub async fn get_player_by_name(&self, name: String) -> Result<Player, Error> {
         let id = self.players.find(doc! {"name": name}, None).await.unwrap();
+        let id = id.current();
 
-        self.get_player(id.current().get_object_id("_id").unwrap()).await
+        self.get_player(id.get_object_id("_id").unwrap()).await
     }
 
     pub async fn get_players(&self) -> Vec<Player> {
