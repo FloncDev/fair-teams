@@ -1,11 +1,12 @@
-use rocket::State;
+use std::{collections::HashMap, hash::Hash};
+use rocket::{State, http::Status, serde::json::Json};
 use serde_json::Map;
+use serde::Deserialize;
 use rocket::serde::json::Value;
-use crate::{AppState, Session};
+use crate::{AppState, Session, teams::Rating};
 
 #[get("/ratings")]
-pub async fn get_ratings(session: Session, state: &State<AppState>) -> Value {
-    println!("{}", session.player.name);
+pub async fn get_ratings(_session: Session, state: &State<AppState>) -> Value {
     let mut ratings = Map::new();
 
     for player in state.db.get_players().await {
@@ -13,4 +14,29 @@ pub async fn get_ratings(session: Session, state: &State<AppState>) -> Value {
     }
 
    Value::from(ratings)
+}
+
+#[derive(Deserialize)]
+pub struct ApiRatings {
+    ratings: HashMap<String, f64>
+}
+
+#[post("/ratings", data="<ratings>")]
+pub async fn post_ratings(session: Session, state: &State<AppState>, ratings: Json<ApiRatings>) -> Status {
+    let rater_id = session.player.id.unwrap();
+
+    for (name, rating) in &ratings.ratings {
+        let player = state.db.get_player_by_name(name.to_owned()).await.unwrap();
+
+        state.db.create_raing(
+            Rating {
+                id: None,
+                rater_id,
+                ratee_id: player.id.unwrap(),
+                rating: rating.to_owned()
+            }
+        ).await;
+    }
+
+    Status::Ok
 }

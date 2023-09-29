@@ -49,5 +49,8 @@ pub async fn rocket() -> _ {
     rocket::build()
         .manage(AppState { db: mongo, sessions: Mutex::new(vec![]) })
         .mount("/", routes![routes::auth::login])
-        .mount("/teams", routes![routes::teams::get_ratings])
+        .mount("/teams", routes![
+                routes::teams::get_ratings,
+                routes::teams::post_ratings
+            ])
 }
