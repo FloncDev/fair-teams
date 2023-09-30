@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate rocket;
 
+#[macro_use]
+extern crate dotenv_codegen;
+
 use std::sync::Mutex;
 use routes::Session;
 use teams::fair_teams;
@@ -50,7 +53,6 @@ pub async fn rocket() -> _ {
         .manage(AppState { db: mongo, sessions: Mutex::new(vec![]) })
         .mount("/", routes![
                 routes::auth::login,
-                routes::auth::create_user
             ])
         .mount("/teams", routes![
                 routes::teams::get_ratings,
