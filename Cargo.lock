@@ -208,6 +208,7 @@ dependencies = [
  "ahash",
  "base64 0.13.1",
  "bitvec",
+ "chrono",
  "hex",
  "indexmap 1.9.3",
  "js-sys",
@@ -255,7 +256,9 @@ checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
+ "wasm-bindgen",
  "windows-targets",
 ]
 
@@ -506,6 +509,8 @@ dependencies = [
 name = "fair_teams"
 version = "0.1.0"
 dependencies = [
+ "bson",
+ "chrono",
  "dotenv",
  "itertools",
  "mongodb",
