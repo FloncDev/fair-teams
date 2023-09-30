@@ -9,7 +9,6 @@ edition = "2021"
 itertools = "0.11.0"
 serde_json = "1.0.107"
 rocket = { version = "0.5.0-rc.2", features = ["json", "secrets"] }
-dotenv = "0.15.0"
 uuid = { version = "1.4.1", features = ["v4"] }
 mongodb = "2.6.1"
 serde = "1.0.188"
@@ -17,4 +16,4 @@ rand = "0.8.5"
 chrono = "0.4.31"
 bson = { version = "2.7.0", features = ["chrono-0_4"]}
 dotenv_codegen = "0.15.0"
-oauth2 = "4.4.2"
+reqwest = "0.11.20"
