@@ -42,17 +42,18 @@ impl AppState {
 pub async fn rocket() -> _ {
     let mongo = Mongo::new().await;
 
-    // let teams = fair_teams(mongo.get_players().await);
+    let teams = fair_teams(mongo.get_players().await);
     
-    // for team in teams {
-        // let players = format!("{} & {}", team.players[0].name, team.players[1].name);
-        // println!("{} ({})", players, team.skill);
-    // }
+    for team in teams {
+        let players = format!("{} & {}", team.players[0].name, team.players[1].name);
+        println!("{} ({})", players, team.skill);
+    }
 
     rocket::build()
         .manage(AppState { db: mongo, sessions: Mutex::new(vec![]) })
         .mount("/", routes![
                 routes::auth::login,
+                routes::auth::callback
             ])
         .mount("/teams", routes![
                 routes::teams::get_ratings,

@@ -1,10 +1,9 @@
 use crate::teams::{Player, Rating};
-use dotenv::dotenv;
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
     Client, Collection, options::FindOptions
 };
-use std::{env, collections::HashSet};
+use std::collections::HashSet;
 use chrono::Utc;
 
 pub struct Mongo {
@@ -14,14 +13,7 @@ pub struct Mongo {
 
 impl Mongo {
     pub async fn new() -> Mongo {
-        dotenv().ok();
-
-        let uri = match env::var("MONGO_URI") {
-            Ok(v) => v.to_string(),
-            Err(_) => format!("Could not find MONGO_URI env variable."),
-        };
-
-        let client = Client::with_uri_str(uri).await.unwrap();
+        let client = Client::with_uri_str(dotenv!("MONGO_URI")).await.unwrap();
         let db = client.database("badminton");
         let ratings: Collection<Rating> = db.collection("ratings");
         let players: Collection<Player> = db.collection("players");
@@ -107,14 +99,15 @@ impl Mongo {
             .unwrap()
             .unwrap();
 
-        Ok(Player { id: Some(id), name: player.name, skill: Some(skill), password: player.password })
+        Ok(Player { id: Some(id), name: player.name, skill: Some(skill), discord_id: player.discord_id})
     }
 
     pub async fn get_player_by_name(&self, name: String) -> Result<Player, Error> {
-        let id = self.players.find(doc! {"name": name}, None).await.unwrap();
-        let id = id.current();
+        Ok(self.players.find_one(doc! {"name": name}, None).await.unwrap().unwrap())
+    }
 
-        self.get_player(id.get_object_id("_id").unwrap()).await
+    pub async fn get_player_by_discord_id(&self, id: String) -> Result<Player, Error> {
+        Ok(self.players.find_one(doc! {"discord_id": id}, None).await.unwrap().unwrap())
     }
 
     pub async fn get_players(&self) -> Vec<Player> {

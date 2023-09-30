@@ -9,7 +9,7 @@ pub struct Player {
     pub name: String,
     #[serde(skip_serializing)]
     pub skill: Option<f64>,
-    pub password: Option<String>
+    pub discord_id: Option<String>
 }
 
 

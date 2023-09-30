@@ -4,7 +4,6 @@ use serde_json::Map;
 use serde::Deserialize;
 use rocket::serde::json::Value;
 use crate::{AppState, Session, teams::Rating};
-use mongodb::bson::DateTime;
 use chrono::Utc;
 
 #[get("/ratings")]

@@ -8,7 +8,7 @@ pub fn fair_teams(mut players: Vec<Player>) -> Vec<Team> {
             id: None,
             name: "[empty]".into(),
             skill: Some(0.0),
-            password: None
+            discord_id: None
         })
     }
 
