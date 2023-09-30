@@ -16,3 +16,4 @@ serde = "1.0.188"
 rand = "0.8.5"
 chrono = "0.4.31"
 bson = { version = "2.7.0", features = ["chrono-0_4"]}
+argon2 = "0.5.2"

@@ -1,3 +1,4 @@
+use chrono::{Utc, DateTime};
 use mongodb::bson::oid::ObjectId;
 use serde::{Serialize, Deserialize};
 
@@ -7,7 +8,8 @@ pub struct Player {
     pub id: Option<ObjectId>,
     pub name: String,
     #[serde(skip_serializing)]
-    pub skill: Option<f64>
+    pub skill: Option<f64>,
+    pub password: Option<String>
 }
 
 
@@ -17,7 +19,9 @@ pub struct Rating {
     pub id: Option<ObjectId>,
     pub rater_id: ObjectId,
     pub ratee_id: ObjectId,
-    pub rating: f64
+    pub rating: f64,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub timestamp: DateTime<Utc>
 }
 
 #[derive(Debug, Clone)]

@@ -2,9 +2,10 @@ use crate::teams::{Player, Rating};
 use dotenv::dotenv;
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
-    Client, Collection,
+    Client, Collection, options::FindOptions
 };
-use std::env;
+use std::{env, collections::HashSet};
+use chrono::Utc;
 
 pub struct Mongo {
     ratings: Collection<Rating>,
@@ -34,6 +35,7 @@ impl Mongo {
             rater_id: rating.rater_id,
             ratee_id: rating.ratee_id,
             rating: rating.rating,
+            timestamp: Utc::now()
         };
 
         match self
@@ -69,31 +71,43 @@ impl Mongo {
     pub async fn get_player(&self, id: ObjectId) -> Result<Player, Error> {
         let mut ratings = self
             .ratings
-            .find(doc! {"ratee_id": id}, None)
+            .find(doc! {"ratee_id": id}, 
+                FindOptions::builder()
+                    .sort(doc!{"timestamp": -1})
+                    .build()
+            )
             .await
             .unwrap();
 
         let mut sum: i32 = 0;
         let mut count: i32 = 0;
 
+        let mut ids: HashSet<ObjectId> = HashSet::new();
+
         while ratings.advance().await.unwrap() {
             let current = ratings.current();
+            let rater_id = current.get_object_id("rater_id").unwrap();
 
-            sum += current.get("rating").unwrap().unwrap().as_i32().unwrap();
+            if ids.contains(&rater_id) { continue; }            
+            ids.insert(rater_id);
+
+            sum += match current.get_i32("rating") {
+                Ok(val) => {val},
+                Err(_) => {current.get_f64("rating").unwrap() as i32}
+            };
             count += 1;
         }
 
         let skill = (sum as f64 / count as f64 * 100.0).round() / 100.0;
 
-        let name = self
+        let player = self
             .players
             .find_one(doc! {"_id": id}, None)
             .await
             .unwrap()
-            .unwrap()
-            .name;
+            .unwrap();
 
-        Ok(Player { id: Some(id), name, skill: Some(skill) })
+        Ok(Player { id: Some(id), name: player.name, skill: Some(skill), password: player.password })
     }
 
     pub async fn get_player_by_name(&self, name: String) -> Result<Player, Error> {

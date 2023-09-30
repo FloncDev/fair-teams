@@ -1,9 +1,11 @@
-use std::{collections::HashMap, hash::Hash};
+use std::collections::HashMap;
 use rocket::{State, http::Status, serde::json::Json};
 use serde_json::Map;
 use serde::Deserialize;
 use rocket::serde::json::Value;
 use crate::{AppState, Session, teams::Rating};
+use mongodb::bson::DateTime;
+use chrono::Utc;
 
 #[get("/ratings")]
 pub async fn get_ratings(_session: Session, state: &State<AppState>) -> Value {
@@ -33,7 +35,8 @@ pub async fn post_ratings(session: Session, state: &State<AppState>, ratings: Js
                 id: None,
                 rater_id,
                 ratee_id: player.id.unwrap(),
-                rating: rating.to_owned()
+                rating: rating.to_owned(),
+                timestamp: Utc::now()
             }
         ).await;
     }
