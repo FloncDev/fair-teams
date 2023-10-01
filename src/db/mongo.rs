@@ -106,11 +106,15 @@ impl Mongo {
     }
 
     pub async fn get_player_by_name(&self, name: String) -> Result<Player, Error> {
-        Ok(self.players.find_one(doc! {"name": name}, None).await.unwrap().unwrap())
+        let obj_id = self.players.find_one(doc! {"name": name}, None).await.unwrap().unwrap().id.unwrap();
+
+        Ok(self.get_player(obj_id).await?)
     }
 
     pub async fn get_player_by_discord_id(&self, id: String) -> Result<Player, Error> {
-        Ok(self.players.find_one(doc! {"discord_id": id}, None).await.unwrap().unwrap())
+        let obj_id = self.players.find_one(doc! {"discord_id": id}, None).await.unwrap().unwrap().id.unwrap();
+
+        Ok(self.get_player(obj_id).await?)
     }
 
     pub async fn get_players(&self) -> Vec<Player> {
