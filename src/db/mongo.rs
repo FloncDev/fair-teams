@@ -33,15 +33,6 @@ impl Mongo {
             timestamp: Utc::now()
         };
 
-        match self
-            .ratings
-            .delete_one(doc! {"rater_id": rating.rater_id}, None)
-            .await
-        {
-            Ok(_) => {}
-            Err(_) => {}
-        };
-
         self.ratings.insert_one(rating, None).await.unwrap();
     }
 
