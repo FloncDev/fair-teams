@@ -2,7 +2,7 @@
 extern crate rocket;
 
 use std::sync::Mutex;
-use rocket::{State, http::Status, response::Redirect};
+use rocket::{State, response::Redirect};
 use rocket_dyn_templates::{Template, context};
 use routes::Session;
 use teams::fair_teams;

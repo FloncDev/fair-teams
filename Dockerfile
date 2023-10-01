@@ -21,6 +21,7 @@ FROM debian:bullseye-slim
 ENV ROCKET_ADDRESS=0.0.0.0
 ENV ROCKET_PORT=8000
 ENV ROCKET_ENV=prod
+ENV ROCKET_TEMPLATE_DIR=/usr/app/templates
 
 RUN apt-get update 
 RUN apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -29,5 +30,6 @@ EXPOSE 8000
 
 WORKDIR /usr/app
 COPY --from=builder /usr/app/fair_teams/target/release/fair_teams /usr/app/fair_teams
+COPY ./templates /usr/app/templates
 
 CMD ["/usr/app/fair_teams"]

@@ -28,25 +28,35 @@ pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: St
     data.insert("redirect_uri", env::var("DISCORD_REDIRECT_URI").unwrap());
 
     let client = reqwest::Client::new();
-    let res = client.post("https://discord.com/api/oauth2/token")
+    let res = match client.post("https://discord.com/api/oauth2/token")
         .form(&data)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .send()
         .await
         .unwrap()
         .json::<OAuthResponse>()
-        .await
-        .unwrap();
+        .await {
+            Ok(resp) => resp,
+            Err(e) => {
+                println!("{:#?}", e);
+                panic!()
+            }
+        };
 
 
-    let res = client.get("https://discord.com/api/users/@me")
+    let res = match client.get("https://discord.com/api/users/@me")
         .header("Authorization", format!("Bearer {}", res.access_token))
         .send()
         .await
         .unwrap()
         .json::<IdentityResponse>()
-        .await
-        .unwrap();
+        .await {
+            Ok(resp) => resp,
+            Err(e) => {
+                println!("{:#?}", e);
+                panic!();
+            }
+        };
 
     let player = state.db.get_player_by_discord_id(res.id).await.unwrap();
 
