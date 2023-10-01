@@ -2,6 +2,8 @@
 extern crate rocket;
 
 use std::sync::Mutex;
+use rocket::{State, http::Status, response::Redirect};
+use rocket_dyn_templates::{Template, context};
 use routes::Session;
 use teams::fair_teams;
 use db::Mongo;
@@ -48,6 +50,8 @@ pub async fn rocket() -> _ {
 
     rocket::build()
         .manage(AppState { db: mongo, sessions: Mutex::new(vec![]) })
+        .attach(Template::fairing())
+        .mount("/", routes![root])
         .mount("/", routes![
                 routes::auth::login,
                 routes::auth::callback
@@ -56,4 +60,16 @@ pub async fn rocket() -> _ {
                 routes::teams::get_ratings,
                 routes::teams::post_ratings
             ])
+}
+
+#[get("/")]
+async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Template, Redirect> {
+    let session = match session {
+        Some(session) => session,
+        None => {return Err(Redirect::to(uri!("/login")));}
+    };
+
+    let ratings = state.db.get_ratings_from_player(&session.player).await;
+
+    Ok(Template::render("index", context! {ratings: ratings, me: session.player}))
 }

@@ -1,7 +1,7 @@
-use std::{collections::HashMap, env::{self, VarError}};
+use std::{collections::HashMap, env};
+use rocket_dyn_templates::{Template, context};
 use serde::Deserialize;
-use rocket::{http::{Status, CookieJar, Cookie}, State, response::Redirect};
-use serde_json::{json, Value};
+use rocket::{http::{CookieJar, Cookie}, State, response::Redirect};
 use crate::{AppState, Session};
 use reqwest;
 use dotenv::dotenv;
@@ -17,7 +17,7 @@ struct IdentityResponse {
 }
 
 #[get("/callback?<code>")]
-pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: String) -> Value {
+pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: String) -> Template {
     dotenv().ok();
     
     let mut data = HashMap::new();
@@ -61,9 +61,7 @@ pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: St
             .finish()
     );
 
-    json!({
-        "status": "ok"
-    })
+    Template::render("logged_in", context! {})
 }
 
 #[get("/login")]

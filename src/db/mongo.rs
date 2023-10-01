@@ -134,7 +134,7 @@ impl Mongo {
         players
     }
 
-    pub async fn get_ratings_from_player(&self, player: Player) -> HashMap<String, i32> {
+    pub async fn get_ratings_from_player(&self, player: &Player) -> HashMap<String, i32> {
         let mut ratings: HashMap<String, i32> = HashMap::new();
 
         let mut cursor = self
