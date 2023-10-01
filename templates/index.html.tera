@@ -152,7 +152,13 @@
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ratings: output})
-        });
+        })
+        .then(resp => {
+            if (resp.ok()) {
+                e.srcElement.hidden = true;
+            }
+        })
+
     })
 </script>
 
