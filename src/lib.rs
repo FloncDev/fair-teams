@@ -75,7 +75,5 @@ async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Templ
     player.insert("name", session.player.name);
     player.insert("rating", format!("{:#?}", session.player.skill.unwrap()));
 
-    println!("{:#?}", state.sessions);
-
     Ok(Template::render("index", context! {ratings: Vec::from_iter(ratings.iter()), me: player}))
 }
