@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use serde::Deserialize;
 use rocket::{http::{Status, CookieJar, Cookie}, State, response::Redirect};
+use serde_json::{json, Value};
 use crate::{AppState, Session};
 use reqwest;
 
@@ -15,7 +16,7 @@ struct IdentityResponse {
 }
 
 #[get("/callback?<code>")]
-pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: &str) -> Status {
+pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: &str) -> Value {
     let mut data = HashMap::new();
     data.insert("client_id", dotenv!("DISCORD_CLIENT_ID"));
     data.insert("client_secret", dotenv!("DISCORD_CLIENT_SECRET"));
@@ -57,7 +58,9 @@ pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: &s
             .finish()
     );
 
-    Status::Ok
+    json!({
+        "status": "ok"
+    })
 }
 
 #[get("/login")]
