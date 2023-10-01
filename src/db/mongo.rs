@@ -134,8 +134,8 @@ impl Mongo {
         players
     }
 
-    pub async fn get_ratings_from_player(&self, player: &Player) -> HashMap<String, i32> {
-        let mut ratings: HashMap<String, i32> = HashMap::new();
+    pub async fn get_ratings_from_player(&self, player: &Player) -> HashMap<String, f64> {
+        let mut ratings: HashMap<String, f64> = HashMap::new();
 
         let mut cursor = self
             .ratings
@@ -149,7 +149,7 @@ impl Mongo {
             let current = cursor.deserialize_current().unwrap();
             let ratee = self.get_player(current.ratee_id).await.unwrap();
 
-            ratings.insert(ratee.name, current.rating as i32);
+            ratings.insert(ratee.name, current.rating);
         }
 
         return ratings;
