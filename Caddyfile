@@ -1,0 +1,3 @@
+{$DOMAIN}
+
+reverse_proxy http://fair_teams:8000
