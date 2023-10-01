@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env::{self, VarError}};
 use serde::Deserialize;
 use rocket::{http::{Status, CookieJar, Cookie}, State, response::Redirect};
 use serde_json::{json, Value};
 use crate::{AppState, Session};
 use reqwest;
+use dotenv::dotenv;
 
 #[derive(Debug, Deserialize)]
 struct OAuthResponse {
@@ -16,13 +17,15 @@ struct IdentityResponse {
 }
 
 #[get("/callback?<code>")]
-pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: &str) -> Value {
+pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: String) -> Value {
+    dotenv().ok();
+    
     let mut data = HashMap::new();
-    data.insert("client_id", dotenv!("DISCORD_CLIENT_ID"));
-    data.insert("client_secret", dotenv!("DISCORD_CLIENT_SECRET"));
-    data.insert("grant_type", "authorization_code");
+    data.insert("client_id", env::var("DISCORD_CLIENT_ID").unwrap());
+    data.insert("client_secret", env::var("DISCORD_CLIENT_SECRET").unwrap());
+    data.insert("grant_type", "authorization_code".to_string());
     data.insert("code", code);
-    data.insert("redirect_uri", dotenv!("DISCORD_REDIRECT_URI"));
+    data.insert("redirect_uri", env::var("DISCORD_REDIRECT_URI").unwrap());
 
     let client = reqwest::Client::new();
     let res = client.post("https://discord.com/api/oauth2/token")
@@ -65,5 +68,7 @@ pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: &s
 
 #[get("/login")]
 pub async fn login() -> Redirect {
-    Redirect::to(dotenv!("DISCORD_OAUTH_URI"))
+    dotenv().ok();
+
+    Redirect::to(env::var("DISCORD_OAUTH_URI").unwrap())
 }

@@ -1,9 +1,6 @@
 #[macro_use]
 extern crate rocket;
 
-#[macro_use]
-extern crate dotenv_codegen;
-
 use std::sync::Mutex;
 use routes::Session;
 use teams::fair_teams;

@@ -3,8 +3,9 @@ use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
     Client, Collection, options::FindOptions
 };
-use std::collections::HashSet;
+use std::{collections::HashSet, env};
 use chrono::Utc;
+use dotenv::dotenv;
 
 pub struct Mongo {
     ratings: Collection<Rating>,
@@ -13,7 +14,9 @@ pub struct Mongo {
 
 impl Mongo {
     pub async fn new() -> Mongo {
-        let client = Client::with_uri_str(dotenv!("MONGO_URI")).await.unwrap();
+        dotenv().ok();
+
+        let client = Client::with_uri_str(env::var("MONGO_URI").unwrap()).await.unwrap();
         let db = client.database("badminton");
         let ratings: Collection<Rating> = db.collection("ratings");
         let players: Collection<Player> = db.collection("players");
