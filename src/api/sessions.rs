@@ -13,8 +13,7 @@ pub struct Session {
 
 impl Session {
     pub fn new(player: Player) -> Session {
-        let seed = [0u8; 32];
-        let mut rng: StdRng = SeedableRng::from_seed(seed);
+        let mut rng: StdRng = SeedableRng::from_entropy();
         let mut bytes = [0u8; 16];
         rng.fill_bytes(&mut bytes);
 
