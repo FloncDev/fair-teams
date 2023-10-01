@@ -3,7 +3,7 @@ use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
     Client, Collection, options::FindOptions
 };
-use std::{collections::HashSet, env};
+use std::{collections::{HashSet, HashMap}, env};
 use chrono::Utc;
 use dotenv::dotenv;
 
@@ -132,5 +132,26 @@ impl Mongo {
         }
 
         players
+    }
+
+    pub async fn get_ratings_from_player(&self, player: Player) -> HashMap<String, i32> {
+        let mut ratings: HashMap<String, i32> = HashMap::new();
+
+        let mut cursor = self
+            .ratings
+            .find(doc! {"rater_id": player.id},
+                FindOptions::builder()
+                    .sort(doc! {"timestamp": -1})
+                    .build()
+        ).await.unwrap();
+
+        while cursor.advance().await.unwrap() {
+            let current = cursor.deserialize_current().unwrap();
+            let ratee = self.get_player(current.ratee_id).await.unwrap();
+
+            ratings.insert(ratee.name, current.rating as i32);
+        }
+
+        return ratings;
     }
 }
