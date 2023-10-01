@@ -15,5 +15,6 @@ services:
       - 443:443
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_date:/data
     env_file:
       - .env
