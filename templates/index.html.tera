@@ -6,6 +6,154 @@
     <title>Badminton</title>
 </head>
 <body>
-    <h1>Hello! {{me.name}}</h1>
+    <nav>
+        <a href="/">Rating</a>
+        <a href="">Tournaments</a>
+        <a href="">Data</a>
+
+        <p>Logged in as <span class="name">{{me.name}}({{me.rating}})</span></p>
+    </nav>
+
+    <h1>Your Ratings</h1>
+
+    <div class="ratings" id="ratings">
+        {% for rating in ratings %}
+            <div class="rating">
+                <label for="{{rating[0]}}-slider">{{rating[0]}}</label>
+                <input type="range" id="{{rating[0]}}-slider" class="slider" min="1" max="10" step="1" value="{{rating[1]}}">
+                <p>{{rating[1]}}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="submit" id="submit">Submit</div>
 </body>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;700&display=swap');
+
+    html {
+        padding: 20px;
+        font-family: "JetBrains Mono", monospace;
+        background-color: #171717;
+        color: #FFF;
+    }
+
+    nav {
+        display: flex;
+        flex-direction: row;
+        background-color: #1C1C1C;
+        align-items: center;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        height: 80px;
+    }
+
+    nav > p {
+        margin-left: auto;
+        margin-right: 30px;
+    }
+
+    nav > a {
+        width: 400px;
+        text-align: center;
+        font-size: 40px;
+    }
+
+
+    .ratings {
+        height: 650px;
+        width: 1100px;
+        overflow-y: scroll;
+    }
+
+    .rating {
+        height: 80px;
+        width: 1000px;
+        display: flex;
+        align-items: center;
+        background-color: #1C1C1C;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .rating > label {
+        margin-left: 20px;
+        font-size: 48px;
+        font-weight: 500;
+        width: 300px;
+    }
+    
+    .rating > p {
+        width: 80px;
+        text-align: center;
+        font-size: 36px;
+    }
+
+    .slider {
+        width: 100%;
+        appearance: none;
+        height: 5px;
+        background: #2f2f2f;
+        border-radius: 5px;
+        outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #d6d6d6;
+        cursor: pointer;
+        border-radius: 20px;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+        background: #fff;
+    }
+
+
+    .submit {
+        width: 200px;
+        height: 50px;
+        background-color: #1C1C1C;
+        margin-top: 50px;
+        border-radius: 5px;
+        text-align: center;
+        line-height: 50px;
+        font-size: 32px;
+        cursor: pointer;
+    }
+</style>
+
+<script defer>
+    let ratings = document.getElementById("ratings");
+
+    for (let i=0; i < ratings.children.length; i++) {
+        let slider = ratings.children[i];
+        let name = slider.children[0].innerHTML;
+
+        slider.children[1].addEventListener("input", e => {
+            slider.children[2].innerHTML = slider.children[1].value;
+        });
+    }
+
+    document.getElementById("submit").addEventListener("click", e => {
+        let output = {};
+
+        for (let i=0; i < ratings.children.length; i++) {
+            let slider = ratings.children[i];
+            let name = slider.children[0].innerHTML;
+
+            output[name] = parseInt(slider.children[1].value);
+        }
+
+        fetch("/teams/ratings", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ratings: output})
+        });
+    })
+</script>
+
 </html>

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
-use std::sync::Mutex;
+use std::{sync::Mutex, collections::HashMap};
 use rocket::{State, response::Redirect};
 use rocket_dyn_templates::{Template, context};
 use routes::Session;
@@ -70,6 +70,10 @@ async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Templ
     };
 
     let ratings = state.db.get_ratings_from_player(&session.player).await;
+    let mut player: HashMap<&str, String> = HashMap::new();
 
-    Ok(Template::render("index", context! {ratings: ratings, me: session.player}))
+    player.insert("name", session.player.name);
+    player.insert("rating", format!("{:#?}", session.player.skill.unwrap()));
+
+    Ok(Template::render("index", context! {ratings: Vec::from_iter(ratings.iter()), me: player}))
 }
