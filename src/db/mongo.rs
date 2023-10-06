@@ -1,7 +1,7 @@
 use crate::teams::{Player, Rating};
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
-    Client, Collection, options::FindOptions
+    Client, Collection, options::{FindOptions, FindOneOptions}
 };
 use std::{collections::{HashSet, HashMap}, env};
 use chrono::Utc;
@@ -25,6 +25,30 @@ impl Mongo {
     }
 
     pub async fn create_raing(&self, rating: Rating) {
+        // Delete latest rating if within 30m
+        match self.ratings.find_one(
+            doc! {"ratee_id": rating.ratee_id, "rater_id": rating.rater_id},
+            FindOneOptions::builder()
+                    .sort(doc!{"timestamp": -1})
+                    .build()
+        ).await {
+            Ok(past_rating) => {
+                let past_rating = past_rating.unwrap();
+
+                if rating.rating == past_rating.rating {
+                    return;
+                }
+
+                let delta = Utc::now() - past_rating.timestamp;
+
+
+                if delta.num_minutes() < 30 {
+                    let _ = self.ratings.delete_one(doc!{"_id": past_rating.id}, None).await;
+                }
+            },
+            Err(_) => {}
+        }
+
         let rating = Rating {
             id: None,
             rater_id: rating.rater_id,
@@ -38,14 +62,10 @@ impl Mongo {
 
     pub async fn create_player(&self, player: Player) {
         // Check to see if they are already in database
-        match self
+        let _ = self
             .players
             .delete_one(doc! {"name": &player.name}, None)
-            .await
-        {
-            Ok(_) => {},
-            Err(_) => {}
-        };
+            .await;
 
         self
             .players
