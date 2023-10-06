@@ -39,10 +39,7 @@ impl Mongo {
                     return;
                 }
 
-                let delta = Utc::now() - past_rating.timestamp;
-
-
-                if delta.num_minutes() < 30 {
+                if rating.timestamp.date_naive() == past_rating.timestamp.date_naive() {
                     let _ = self.ratings.delete_one(doc!{"_id": past_rating.id}, None).await;
                 }
             },
