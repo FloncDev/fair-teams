@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badminton</title>
+    <link rel="stylesheet" href="static/profile.css">
+</head>
+<body>
+    <nav>
+        <h1 class="nav-title">Profile</h1>
+        <div id="nav-icon">
+           <div class="bar1"></div>
+           <div class="bar2"></div>
+           <div class="bar3"></div> 
+        </div>
+    </nav>
+
+    <div class="rating">
+        <p class="mini-title">Your Rating</p>
+        <h1 class="rating-num">{{me.rating}}</h1>
+        <p class="percent"><span style="color: {{change[0]}};">{{change[1]}}</span> from last week</p>
+    </div>
+
+    <div class="past-games">
+        <p class="mini-title">Recent Matches</p>
+
+        <p>Coming soon...</p>
+    </div>
+</body>
+
+<script>
+    document.getElementById("nav-icon")
+        .addEventListener("click", () => {
+            document.location.href = "/ratings"
+        })
+</script>
+
+</html>

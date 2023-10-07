@@ -1,4 +1,5 @@
 use crate::teams::{Player, Rating};
+use bson::DateTime;
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
     Client, Collection, options::{FindOptions, FindOneOptions}
@@ -25,7 +26,7 @@ impl Mongo {
     }
 
     pub async fn create_raing(&self, rating: Rating) {
-        // Delete latest rating if within 30m
+        // Delete latest rating if within the same day
         match self.ratings.find_one(
             doc! {"ratee_id": rating.ratee_id, "rater_id": rating.rater_id},
             FindOneOptions::builder()
@@ -71,10 +72,24 @@ impl Mongo {
             .unwrap();
     }
 
-    pub async fn get_player(&self, id: ObjectId) -> Result<Player, Error> {
+    pub async fn get_player(&self, id: ObjectId, time: Option<DateTime>) -> Result<Player, Error> {
+        let filter = match time {
+            Some(v) => {
+                doc! {
+                    "ratee_id": id,
+                    "timestamp": doc! {
+                        "$lte": v
+                    }
+                }
+            },
+            None => {
+                doc! {"ratee_id": id}
+            }
+        };
+
         let mut ratings = self
             .ratings
-            .find(doc! {"ratee_id": id}, 
+            .find(filter, 
                 FindOptions::builder()
                     .sort(doc!{"timestamp": -1})
                     .build()
@@ -116,13 +131,13 @@ impl Mongo {
     pub async fn get_player_by_name(&self, name: String) -> Result<Player, Error> {
         let obj_id = self.players.find_one(doc! {"name": name}, None).await.unwrap().unwrap().id.unwrap();
 
-        Ok(self.get_player(obj_id).await?)
+        Ok(self.get_player(obj_id, None).await?)
     }
 
     pub async fn get_player_by_discord_id(&self, id: String) -> Result<Player, Error> {
         let obj_id = self.players.find_one(doc! {"discord_id": id}, None).await.unwrap().unwrap().id.unwrap();
 
-        Ok(self.get_player(obj_id).await?)
+        Ok(self.get_player(obj_id, None).await?)
     }
 
     pub async fn get_players(&self) -> Vec<Player> {
@@ -139,7 +154,7 @@ impl Mongo {
             let id = current.get("_id").unwrap().unwrap().as_object_id().unwrap();
 
             players.push(
-                self.get_player(id).await.unwrap()
+                self.get_player(id, None).await.unwrap()
             );
         }
 
@@ -159,7 +174,7 @@ impl Mongo {
 
         while cursor.advance().await.unwrap() {
             let current = cursor.deserialize_current().unwrap();
-            let ratee = self.get_player(current.ratee_id).await.unwrap();
+            let ratee = self.get_player(current.ratee_id, None).await.unwrap();
 
             ratings.insert(ratee.name, current.rating);
         }
