@@ -1,7 +1,11 @@
 #[macro_use]
 extern crate rocket;
 
-use std::sync::Mutex;
+use std::{sync::Mutex, collections::HashMap};
+use bson::DateTime;
+use chrono::{Utc, Duration};
+use rocket::{State, response::Redirect};
+use rocket_dyn_templates::{Template, context};
 use routes::Session;
 use teams::fair_teams;
 use db::Mongo;
@@ -11,6 +15,7 @@ pub mod db;
 pub mod teams;
 pub mod api;
 pub mod tournament;
+pub mod static_files;
 
 pub struct AppState {
     pub db: Mongo,
@@ -48,6 +53,12 @@ pub async fn rocket() -> _ {
 
     rocket::build()
         .manage(AppState { db: mongo, sessions: Mutex::new(vec![]) })
+        .attach(Template::fairing())
+        .mount("/", routes![
+                root,
+                ratings
+            ])
+        .mount("/", routes![static_files::get_file])
         .mount("/", routes![
                 routes::auth::login,
                 routes::auth::callback
@@ -56,4 +67,46 @@ pub async fn rocket() -> _ {
                 routes::teams::get_ratings,
                 routes::teams::post_ratings
             ])
+}
+
+#[get("/")]
+async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Template, Redirect> {
+    let session = match session {
+        Some(session) => session,
+        None => {return Err(Redirect::to(uri!("/login")));}
+    };
+
+    let mut player: HashMap<&str, String> = HashMap::new();
+
+    player.insert("name", session.player.name);
+    player.insert("rating", format!("{:#?}", session.player.skill.unwrap()));
+
+    let last_week_player = state.db.get_player(
+        session.player.id.unwrap(),
+        Some(DateTime::from_chrono(Utc::now()-Duration::weeks(1)))
+    ).await.unwrap();
+
+    let percent = (last_week_player.skill.unwrap() - session.player.skill.unwrap()) / session.player.skill.unwrap() * 100.0;
+    let change = {
+        if percent == 0.0 {
+            (String::from("#8C8C8C"), String::from("No change"))
+        } else if percent > 0.0 {
+            (String::from("#5C8E58"), format!("+{:.1}%", percent))
+        } else {
+            (String::from("#9E4747"), format!("{:.1}%", percent))
+        }
+    };
+
+    Ok(Template::render("profile", context! {me: player, change: change}))
+}
+
+#[get("/ratings")]
+async fn ratings(session: Option<Session>, state: &State<AppState>) -> Result<Template, Redirect> {
+    let session = match session {
+        Some(session) => session,
+        None => {return Err(Redirect::to(uri!("/login")));}
+    };
+
+    let ratings = state.db.get_ratings_from_player(&session.player).await;
+    Ok(Template::render("ratings",context!{ratings:Vec::from_iter(ratings.iter())}))
 }

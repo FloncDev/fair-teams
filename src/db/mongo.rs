@@ -1,9 +1,10 @@
 use crate::teams::{Player, Rating};
+use bson::DateTime;
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
-    Client, Collection, options::FindOptions
+    Client, Collection, options::{FindOptions, FindOneOptions}
 };
-use std::{collections::HashSet, env};
+use std::{collections::{HashSet, HashMap}, env};
 use chrono::Utc;
 use dotenv::dotenv;
 
@@ -25,6 +26,27 @@ impl Mongo {
     }
 
     pub async fn create_raing(&self, rating: Rating) {
+        // Delete latest rating if within the same day
+        match self.ratings.find_one(
+            doc! {"ratee_id": rating.ratee_id, "rater_id": rating.rater_id},
+            FindOneOptions::builder()
+                    .sort(doc!{"timestamp": -1})
+                    .build()
+        ).await {
+            Ok(past_rating) => {
+                let past_rating = past_rating.unwrap();
+
+                if rating.rating == past_rating.rating {
+                    return;
+                }
+
+                if rating.timestamp.date_naive() == past_rating.timestamp.date_naive() {
+                    let _ = self.ratings.delete_one(doc!{"_id": past_rating.id}, None).await;
+                }
+            },
+            Err(_) => {}
+        }
+
         let rating = Rating {
             id: None,
             rater_id: rating.rater_id,
@@ -33,28 +55,15 @@ impl Mongo {
             timestamp: Utc::now()
         };
 
-        match self
-            .ratings
-            .delete_one(doc! {"rater_id": rating.rater_id}, None)
-            .await
-        {
-            Ok(_) => {}
-            Err(_) => {}
-        };
-
         self.ratings.insert_one(rating, None).await.unwrap();
     }
 
     pub async fn create_player(&self, player: Player) {
         // Check to see if they are already in database
-        match self
+        let _ = self
             .players
             .delete_one(doc! {"name": &player.name}, None)
-            .await
-        {
-            Ok(_) => {},
-            Err(_) => {}
-        };
+            .await;
 
         self
             .players
@@ -63,10 +72,24 @@ impl Mongo {
             .unwrap();
     }
 
-    pub async fn get_player(&self, id: ObjectId) -> Result<Player, Error> {
+    pub async fn get_player(&self, id: ObjectId, time: Option<DateTime>) -> Result<Player, Error> {
+        let filter = match time {
+            Some(v) => {
+                doc! {
+                    "ratee_id": id,
+                    "timestamp": doc! {
+                        "$lte": v
+                    }
+                }
+            },
+            None => {
+                doc! {"ratee_id": id}
+            }
+        };
+
         let mut ratings = self
             .ratings
-            .find(doc! {"ratee_id": id}, 
+            .find(filter, 
                 FindOptions::builder()
                     .sort(doc!{"timestamp": -1})
                     .build()
@@ -106,11 +129,15 @@ impl Mongo {
     }
 
     pub async fn get_player_by_name(&self, name: String) -> Result<Player, Error> {
-        Ok(self.players.find_one(doc! {"name": name}, None).await.unwrap().unwrap())
+        let obj_id = self.players.find_one(doc! {"name": name}, None).await.unwrap().unwrap().id.unwrap();
+
+        Ok(self.get_player(obj_id, None).await?)
     }
 
     pub async fn get_player_by_discord_id(&self, id: String) -> Result<Player, Error> {
-        Ok(self.players.find_one(doc! {"discord_id": id}, None).await.unwrap().unwrap())
+        let obj_id = self.players.find_one(doc! {"discord_id": id}, None).await.unwrap().unwrap().id.unwrap();
+
+        Ok(self.get_player(obj_id, None).await?)
     }
 
     pub async fn get_players(&self) -> Vec<Player> {
@@ -127,10 +154,31 @@ impl Mongo {
             let id = current.get("_id").unwrap().unwrap().as_object_id().unwrap();
 
             players.push(
-                self.get_player(id).await.unwrap()
+                self.get_player(id, None).await.unwrap()
             );
         }
 
         players
+    }
+
+    pub async fn get_ratings_from_player(&self, player: &Player) -> HashMap<String, f64> {
+        let mut ratings: HashMap<String, f64> = HashMap::new();
+
+        let mut cursor = self
+            .ratings
+            .find(doc! {"rater_id": player.id},
+                FindOptions::builder()
+                    .sort(doc! {"timestamp": -1})
+                    .build()
+        ).await.unwrap();
+
+        while cursor.advance().await.unwrap() {
+            let current = cursor.deserialize_current().unwrap();
+            let ratee = self.get_player(current.ratee_id, None).await.unwrap();
+
+            ratings.insert(ratee.name, current.rating);
+        }
+
+        return ratings;
     }
 }

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badminton</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <nav>
+        <h1 class="nav-title">Ratings</h1>
+        <div id="nav-icon">
+           <div class="bar1"></div>
+           <div class="bar2"></div>
+           <div class="bar3"></div> 
+        </div>
+    </nav>
+
+    <div class="ratings" id="ratings">
+        {% for rating in ratings %}
+            <div class="rating">
+                <div class="top">
+                    <h2 class="name">{{rating[0]}}</h2>
+                    <p class="rating-value">{{rating[1]}}</p>
+                </div>
+                <input type="range" value="{{rating[1]}}" class="slider" min="1" max="10" step="0.5">
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="submit">
+        Submit
+    </div>
+</body>
+
+<script src="static/index.js"></script>
+
+</html>

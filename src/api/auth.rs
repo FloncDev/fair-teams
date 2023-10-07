@@ -1,7 +1,7 @@
-use std::{collections::HashMap, env::{self, VarError}};
+use std::{collections::HashMap, env};
+use rocket_dyn_templates::{Template, context};
 use serde::Deserialize;
-use rocket::{http::{Status, CookieJar, Cookie}, State, response::Redirect};
-use serde_json::{json, Value};
+use rocket::{http::{CookieJar, Cookie}, State, response::Redirect};
 use crate::{AppState, Session};
 use reqwest;
 use dotenv::dotenv;
@@ -17,7 +17,7 @@ struct IdentityResponse {
 }
 
 #[get("/callback?<code>")]
-pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: String) -> Value {
+pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: String) -> Template {
     dotenv().ok();
     
     let mut data = HashMap::new();
@@ -28,25 +28,35 @@ pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: St
     data.insert("redirect_uri", env::var("DISCORD_REDIRECT_URI").unwrap());
 
     let client = reqwest::Client::new();
-    let res = client.post("https://discord.com/api/oauth2/token")
+    let res = match client.post("https://discord.com/api/oauth2/token")
         .form(&data)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .send()
         .await
         .unwrap()
         .json::<OAuthResponse>()
-        .await
-        .unwrap();
+        .await {
+            Ok(resp) => resp,
+            Err(e) => {
+                println!("{:#?}", e);
+                panic!()
+            }
+        };
 
 
-    let res = client.get("https://discord.com/api/users/@me")
+    let res = match client.get("https://discord.com/api/users/@me")
         .header("Authorization", format!("Bearer {}", res.access_token))
         .send()
         .await
         .unwrap()
         .json::<IdentityResponse>()
-        .await
-        .unwrap();
+        .await {
+            Ok(resp) => resp,
+            Err(e) => {
+                println!("{:#?}", e);
+                panic!();
+            }
+        };
 
     let player = state.db.get_player_by_discord_id(res.id).await.unwrap();
 
@@ -61,9 +71,7 @@ pub async fn callback(state: &State<AppState>, cookies: &CookieJar<'_>, code: St
             .finish()
     );
 
-    json!({
-        "status": "ok"
-    })
+    Template::render("logged_in", context! {})
 }
 
 #[get("/login")]

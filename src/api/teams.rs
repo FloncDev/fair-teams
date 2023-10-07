@@ -26,9 +26,19 @@ pub struct ApiRatings {
 pub async fn post_ratings(session: Session, state: &State<AppState>, ratings: Json<ApiRatings>) -> Status {
     let rater_id = session.player.id.unwrap();
 
+    let previous_ratings = state.db.get_ratings_from_player(&session.player).await;
+
     for (name, rating) in &ratings.ratings {
         let player = state.db.get_player_by_name(name.to_owned()).await.unwrap();
 
+        match previous_ratings.get(&player.name) {
+            Some(prev_rating) => {
+                if prev_rating == rating {
+                    continue;
+                }
+            },
+            None => {}
+        }
         state.db.create_raing(
             Rating {
                 id: None,
@@ -38,6 +48,7 @@ pub async fn post_ratings(session: Session, state: &State<AppState>, ratings: Js
                 timestamp: Utc::now()
             }
         ).await;
+
     }
 
     Status::Ok
