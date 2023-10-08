@@ -78,16 +78,17 @@ async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Templ
     };
 
     let mut player: HashMap<&str, String> = HashMap::new();
+    let skill = state.db.get_player(session.player.id.unwrap(), None).await.unwrap().skill.unwrap();
 
     player.insert("name", session.player.name);
-    player.insert("rating", format!("{:#?}", session.player.skill.unwrap()));
+    player.insert("rating", format!("{:#?}", skill));
 
     let last_week_player = state.db.get_player(
         session.player.id.unwrap(),
         Some(DateTime::from_chrono(Utc::now()-Duration::weeks(1)))
     ).await.unwrap();
 
-    let percent = (last_week_player.skill.unwrap() - session.player.skill.unwrap()) / session.player.skill.unwrap() * 100.0;
+    let percent = (last_week_player.skill.unwrap() - skill) / session.player.skill.unwrap() * 100.0;
     let change = {
         if percent == 0.0 {
             (String::from("#8C8C8C"), String::from("No change"))
