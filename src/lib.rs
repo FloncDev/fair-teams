@@ -88,7 +88,7 @@ async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Templ
         Some(DateTime::from_chrono(Utc::now()-Duration::weeks(1)))
     ).await.unwrap();
 
-    let percent = (skill - last_week_player.skill.unwrap()) / skill * 100.0;
+    let percent = (skill - last_week_player.skill.unwrap()) / last_week_player.skill.unwrap() * 100.0;
     let change = {
         if percent == 0.0 {
             (String::from("#8C8C8C"), String::from("No change"))
