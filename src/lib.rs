@@ -6,7 +6,7 @@ use bson::DateTime;
 use chrono::{Utc, Duration};
 use rocket::{State, response::Redirect};
 use rocket_dyn_templates::{Template, context};
-use routes::{Session, sessions};
+use routes::Session;
 use teams::fair_teams;
 use db::Mongo;
 use api as routes;
@@ -88,7 +88,7 @@ async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Templ
         Some(DateTime::from_chrono(Utc::now()-Duration::weeks(1)))
     ).await.unwrap();
 
-    let percent = (last_week_player.skill.unwrap() - skill) / session.player.skill.unwrap() * 100.0;
+    let percent = (skill - last_week_player.skill.unwrap()) / skill * 100.0;
     let change = {
         if percent == 0.0 {
             (String::from("#8C8C8C"), String::from("No change"))
