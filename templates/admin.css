@@ -1,0 +1,21 @@
+html {
+    background-color: #171717;
+    padding: 10px;
+    color: #FFF;
+    font-family: "JetBrains Mono", monospace;
+}
+
+nav {
+    border-radius: 8px;
+    background: #1C1C1C;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px 0 10px;
+    .nav-title {
+        font-size: 32px;
+        font-weight: 500;
+    }
+    margin-bottom: 30px;
+}
