@@ -6,7 +6,7 @@ use bson::DateTime;
 use chrono::{Utc, Duration};
 use rocket::{State, response::Redirect};
 use rocket_dyn_templates::{Template, context};
-use routes::Session;
+use routes::{Session, sessions};
 use teams::fair_teams;
 use db::Mongo;
 use api as routes;
@@ -56,7 +56,8 @@ pub async fn rocket() -> _ {
         .attach(Template::fairing())
         .mount("/", routes![
                 root,
-                ratings
+                ratings,
+                admin
             ])
         .mount("/", routes![static_files::get_file])
         .mount("/", routes![
@@ -77,16 +78,17 @@ async fn root(session: Option<Session>, state: &State<AppState>) -> Result<Templ
     };
 
     let mut player: HashMap<&str, String> = HashMap::new();
+    let skill = state.db.get_player(session.player.id.unwrap(), None).await.unwrap().skill.unwrap();
 
     player.insert("name", session.player.name);
-    player.insert("rating", format!("{:#?}", session.player.skill.unwrap()));
+    player.insert("rating", format!("{:#?}", skill));
 
     let last_week_player = state.db.get_player(
         session.player.id.unwrap(),
         Some(DateTime::from_chrono(Utc::now()-Duration::weeks(1)))
     ).await.unwrap();
 
-    let percent = (last_week_player.skill.unwrap() - session.player.skill.unwrap()) / session.player.skill.unwrap() * 100.0;
+    let percent = (last_week_player.skill.unwrap() - skill) / session.player.skill.unwrap() * 100.0;
     let change = {
         if percent == 0.0 {
             (String::from("#8C8C8C"), String::from("No change"))
@@ -108,5 +110,19 @@ async fn ratings(session: Option<Session>, state: &State<AppState>) -> Result<Te
     };
 
     let ratings = state.db.get_ratings_from_player(&session.player).await;
-    Ok(Template::render("ratings",context!{ratings:Vec::from_iter(ratings.iter())}))
+    Ok(Template::render("ratings", context! {ratings:Vec::from_iter(ratings.iter())}))
+}
+
+#[get("/admin")]
+async fn admin(session: Option<Session>, state: &State<AppState>) -> Result<Template, Redirect> {
+    let session = match session {
+        Some(session) => session,
+        None => {return Err(Redirect::to(uri!("/login")));}
+    };
+
+    if session.player.discord_id.unwrap() != String::from("275709752875548674") {
+        return Err(Redirect::to("/"));
+    }
+
+    Ok(Template::render("admin", context! {}))
 }
